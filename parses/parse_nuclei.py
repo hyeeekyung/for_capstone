@@ -1,6 +1,10 @@
 import re
 from collections import defaultdict
 
+def strip_ansi(text: str) -> str:
+    ansi_escape = re.compile(r"\x1B[@-_][0-?]*[ -/]*[@-~]")
+    return ansi_escape.sub("", text)
+
 def extract_target_url(command):
     match = re.search(r"-u\s+(http[s]?://\S+)", command)
     return match.group(1) if match else None
@@ -14,7 +18,7 @@ def extract_core_logs(log_text):
 def infer_success(log_text):
     matches = re.findall(r"Matched:\s*(\d+)", log_text)
     if matches:
-        final = int(matches[-1])
+        final = int(matches[-1])  # ✅ 마지막 matched 값으로 판단
         return 1 if final == 2 else 0
     return 0
 
@@ -22,6 +26,7 @@ def extract_all_cname_records(log_text, base_domain):
     """
     CNAME\t<도메인> 형식 그대로 추출하고 리스트로 반환
     """
+    # 대상 도메인의 DNS 매핑 블록 찾기
     pattern = re.search(rf"\[dns\]\s+\[info\]\s+{re.escape(base_domain)}\s+\[(.*?)\]", log_text)
     if pattern:
         raw_cname_block = pattern.group(1)
@@ -30,9 +35,10 @@ def extract_all_cname_records(log_text, base_domain):
     return []
 
 def parse_nuclei_output(stdout: str, meta: dict):
-    ansi_escape = re.compile(r"\x1B[@-_][0-?]*[ -/]*[@-~]")
-    clean_stdout = ansi_escape.sub("", stdout)
+    # 1. ANSI 코드 제거
+    clean_stdout = strip_ansi(stdout)
 
+    # 2. DNS/HTTP 매칭 확인용 도메인 분리
     lines = clean_stdout.strip().splitlines()
     detections = defaultdict(set)
 
@@ -49,11 +55,14 @@ def parse_nuclei_output(stdout: str, meta: dict):
                     domain = match.group(1).replace("http://", "").replace("https://", "")
                     detections[domain].add("http")
 
-    confirmed_domains = [d for d, tags in detections.items() if {"dns", "http"} <= tags]
-    base_domain = meta.get("target_url", "").replace("http://", "").replace("https://", "")
+    # 3. success 판별 (마지막 matched가 2인지 여부)
     final_success = infer_success(clean_stdout)
+
+    # 4. CNAME 레코드 추출
+    base_domain = meta.get("target_url", "").replace("http://", "").replace("https://", "")
     cname_records = extract_all_cname_records(clean_stdout, base_domain)
 
+    # 5. 결과 구성
     return {
         "tool_id": 1,
         "target": meta.get("target_url"),

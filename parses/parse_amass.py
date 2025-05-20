@@ -24,9 +24,10 @@ def parse_amass_output(output: str, meta: dict):
         "target": meta.get("target_url", ""),
         "command": meta.get("command"),
         "success": 1 if subdomains else 0,
-        "subdomains": logs_clean,
-        "logs": logs_clean,          # 도메인만 포함된 로그
-        "logs_full": full_log_clean, # 전체 로그 (output_log 기반)
+        "subdomains": logs_clean,           # ✅ 문자열 (전체 줄바꿈 포함)
+        "subdomain_list": subdomains,       # ✅ 리스트 (핵심: nuclei 1개씩 실행용)
+        "logs": logs_clean,
+        "logs_full": full_log_clean,
         "start_time": meta.get("start_time"),
         "end_time": meta.get("end_time")
     }

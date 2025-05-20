@@ -19,7 +19,7 @@ RESOURCE_TOOL_MAP = {
     "domain": [
         {
             "tool": run_nmap,
-            "input_args" : ["ip_address"],
+            "input_args" : [{"ip_address": "value"}],
             "parser": parse_nmap_output,
             "parser_args": ["output", "command", "tool"],
             "next_resource": []  # nmap은 취약점 정보로 끝
@@ -28,25 +28,25 @@ RESOURCE_TOOL_MAP = {
     "keyword": [
         {
             "tool": run_cloud_enum,
-            "input_args" : ["keyword"],
+            "input_args" : [{"keyword": "value"}],
             "parser": parse_cloud_enum_output,
             "parser_args": ["output_file", "command", "start_time", "end_time", "tool"],
             "next_resource": ["target"]  # 퍼블릭 S3 버킷 식별
         },
         {
             "tool": run_amass,
-            "input_args" : ["keyword"],
+            "input_args" : [{"keyword": "value"}],
             "parser": parse_amass_output,
             "parser_args": ["output", "meta"],
-            "next_resource": ["subdomains"]  # 서브도메인 → nuclei로
+            "next_resource": ["subdomain_list"]  # 서브도메인 → nuclei로
         }
     ],
     "url": [
         {
             "tool": run_nuclei,
             "input_args": [
-                {"target": "value"},  # 현재 scan 함수의 value 전달
-                {"const": "/home/skyroute/nuclei-templates/dns/detect-dangling-s3-cname.yaml"}
+                {"url": "value"},
+                {"template_path": "/home/skyroute/nuclei-templates/dns/detect-dangling-s3-cname.yaml"}
             ],
             "parser": parse_nuclei_output,
             "parser_args": ["output", "meta"],
@@ -65,7 +65,10 @@ RESOURCE_TOOL_MAP = {
     "credentials": [
         {
             "tool": run_enumerate_iam,
-            "input_args" : ["access_key", "secret_key"],
+            "input_args": [
+                {"access_key": "value"},
+                {"secret_key": "value"}
+            ],
             "parser": parse_enumerate_iam_output,
             "parser_args": ["output_file", "tool", "command", "start_time", "end_time"],
             "next_resource": []  # IAM 함수 확인으로 끝
@@ -114,7 +117,7 @@ def custom_preprocess(nxt_val: str, nxt_key: str, tool_name: str) -> str:
 
         return cleaned
 
-    if tool_name == "run_amass" and nxt_key == "subdomains":
+    if tool_name == "run_amass" and nxt_key == "subdomain_list":
         return f"http://{nxt_val}"
 
     return nxt_val

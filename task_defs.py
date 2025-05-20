@@ -87,26 +87,15 @@ def schedule_scan(resource_type, value, scan_job_id, depth=0, max_depth=3):
     for m in mappings:
         tool_id = m.get("tool_id", -1)
 
-        input_keys = m.get("input_args", [])
         input_values = []
-
-        if len(input_keys) == 1:
-            input_values = [value]
-        else:
-            # meta 없이 초기 input 구성 (value 외 필요한 값이 없으면 None)
-            input_values = [None for _ in input_keys]
+        for arg in m.get("input_args", []):
+            for k, v in arg.items():
+                input_values.append(value if v == "value" else v)
 
         raw = m["tool"](*input_values)
         meta = build_meta(tool_id, raw)
 
-        parser_args = []
-        for arg in m.get("parser_args", []):
-            if arg == "raw":
-                parser_args.append(raw)
-            elif arg == "meta":
-                parser_args.append(meta)
-            else:
-                parser_args.append(meta.get(arg))
+        parser_args = [raw if arg == "raw" else meta if arg == "meta" else meta.get(arg) for arg in m.get("parser_args", [])]
 
         print(f"[STEP {depth}] 실행 도구: {m['tool'].__name__}")
         print("==[DEBUG]==")
@@ -133,7 +122,6 @@ def schedule_scan(resource_type, value, scan_job_id, depth=0, max_depth=3):
 
                 for nxt_val in next_values:
                     tool_name = m["tool"].__name__
-
                     if tool_name == "run_s3scanner" and nxt_key == "object":
                         _, sensitive_files = parsed
                         for obj in sensitive_files:
@@ -146,6 +134,8 @@ def schedule_scan(resource_type, value, scan_job_id, depth=0, max_depth=3):
                     if nxt_type and depth < max_depth:
                         print(f"[DEBUG] 다음 스캔 → type: {nxt_type}, value: {nxt_val}")
                         schedule_scan.delay(nxt_type, nxt_val, scan_job_id, depth + 1, max_depth)
+                        print(f"end\n")
+
 
 # S3 Object 수집용
 AWS_KEY_ID_RE = re.compile(r'AKIA[0-9A-Z]{16}')
