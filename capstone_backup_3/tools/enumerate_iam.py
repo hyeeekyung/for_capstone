@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 def run_enumerate_iam(access_key, secret_key):
-    enumerate_iam_path = os.path.expanduser("~/cloud-1/capstone/capstone/tools/enumerate-iam/enumerate-iam.py")
+    enumerate_iam_path = os.path.expanduser("~/cloud-1/capstone_backup_3/tools/enumerate-iam/enumerate-iam.py")
     command = ["python3", enumerate_iam_path, "--access-key", access_key, "--secret-key", secret_key]
 
     start_time = datetime.now()
@@ -16,7 +16,7 @@ def run_enumerate_iam(access_key, secret_key):
     )
 
     # 로그 저장 경로 설정
-    log_dir = os.path.expanduser("~/cloud-1/capstone/capstone/logs")
+    log_dir = os.path.expanduser("~/cloud-1/capstone_backup_3/logs")
     os.makedirs(log_dir, exist_ok=True)
 
     # microseconds 포함한 timestamp로 충돌 방지

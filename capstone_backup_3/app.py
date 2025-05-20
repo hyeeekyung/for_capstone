@@ -84,11 +84,11 @@ def scan():
 
 
     # nuclei 실행
-    target_url = f"http://data.sskyroute.com"
-    template_path = "/home/skyroute/nuclei-templates/dns/detect-dangling-s3-cname.yaml"
+    # target_url = f"http://data.sskyroute.com"
+    # template_path = "/home/skyroute/nuclei-templates/dns/detect-dangling-s3-cname.yaml"
 
-    nuclei_result = run_nuclei(target_url, template_path)
-    parsed_result = parse_nuclei_output(nuclei_result["output_log"], nuclei_result)
+    # nuclei_result = run_nuclei(target_url, template_path)
+    # parsed_result = parse_nuclei_output(nuclei_result["output_log"], nuclei_result)
 
 
     # enumerate_iam 실행 
@@ -115,19 +115,19 @@ def scan():
     
 
     # cloud_enum 실행
-    # keyword = "sskyroute"
+    keyword = "sskyroute"
 
-    # cloud_enum_result = run_cloud_enum(keyword)
+    cloud_enum_result = run_cloud_enum(keyword)
 
-    # if cloud_enum_result["status"] == "success":
-    #    parsed_main, parsed_files = parse_cloud_enum_output(
-    #        output_file_path=cloud_enum_result["output_file"],
-    #        keyword_command=cloud_enum_result["command"],
-    #        start_time=cloud_enum_result["start_time"],
-    #        end_time=cloud_enum_result["end_time"]
-    #    )
-    #else:
-    #    parsed_main, parsed_files = [], []
+    if cloud_enum_result["status"] == "success":
+        parsed_main, parsed_files = parse_cloud_enum_output(
+            output_file_path=cloud_enum_result["output_file"],
+            keyword_command=cloud_enum_result["command"],
+            start_time=cloud_enum_result["start_time"],
+            end_time=cloud_enum_result["end_time"]
+        )
+    else:
+        parsed_main, parsed_files = [], []
 
     return jsonify({
         # ip <-> 도메인 변환 확인
@@ -153,14 +153,14 @@ def scan():
         # "parsed_s3scanner_sensitive_files": s3scanner_sensitive_files
 
         # cloud_enum 결과 표시 
-        # "cloudEnumScanResult": parsed_main,
-        # "cloudEnumDiscoveredFile": parsed_files,
-        # "raw_cloud_enum_result_file": cloud_enum_result["output_file"],  # ✅ 수정: 파일 경로를 반환
-        # "status": cloud_enum_result["status"]
+        "cloudEnumScanResult": parsed_main,
+        "cloudEnumDiscoveredFile": parsed_files,
+        "raw_cloud_enum_result_file": cloud_enum_result["output_file"],  # ✅ 수정: 파일 경로를 반환
+        "status": cloud_enum_result["status"]
 
         # nulcei 결과 표시 
-        "nulcei_result": parsed_result,
-        "raw_nuclei_result": nuclei_result
+        # "nulcei_result": parsed_result,
+        # "raw_nuclei_result": nuclei_result
     })
     
 
